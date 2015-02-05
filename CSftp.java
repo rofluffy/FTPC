@@ -14,9 +14,6 @@ public class CSftp {
 	private static BufferedReader reader = null;
 	private static PrintWriter writer = null;
 	
-	private BufferedReader dataReader = null;
-	private PrintWriter dataWriter = null;
-	
 	static String control = null;
 
 	public static void main(String[] args) {
@@ -40,13 +37,10 @@ public class CSftp {
 		} catch (IOException exception) {
 			System.err
 					.println("898 Input error while reading commands, terminating.");
-		} /*catch (NullPointerException exception){
-			System.err.println("803 Supplied command not expected at this time.");
-		}*/
+		}
 	}
 
-	// TODO multi line response fix!
-	// TODO: function control the cmd
+	// function control the cmd
 	public static void control(String cmd) {
 		String[] input = cmd.split("\\s+");
 		control = input[0];
@@ -64,14 +58,19 @@ public class CSftp {
 				break;
 				
 			case "close":
+				if (input.length != 1){
+					throw new IOException("801 Incorrect number of arguments.");
+				}
 				logout();
 				break;
 
 			case "quit":
+				if (input.length != 1){
+					throw new IOException("801 Incorrect number of arguments.");
+				}
 				disconnect();
 				break;
 				
-			// TODO: get
 			case "get":
 				if(input.length != 2){
 					throw new IOException("801 Incorrect number of arguments.");
@@ -79,7 +78,7 @@ public class CSftp {
 					getFile(input[1]);
 				}
 				break;
-			// TODO: put
+			
 			case "put":
 				if(input.length != 2){
 					throw new IOException("801 Incorrect number of arguments.");
@@ -87,7 +86,7 @@ public class CSftp {
 					putFile(input[1]);
 				}
 				break;
-			// TODO: cd
+			
 			case "cd":
 				if(input.length != 2){
 					throw new IOException("801 Incorrect number of arguments.");
@@ -95,7 +94,7 @@ public class CSftp {
 					changedir(input[1]);
 				}
 				break;
-			// TODO: dir
+			
 			case "dir":
 				if(input.length>1){
 					throw new IOException("801 Incorrect number of arguments.");
@@ -118,9 +117,10 @@ public class CSftp {
 		}
 
 	}
-	// TODO: open SERVER PORT (port is optional, default is 21, return 803 if already open)
+	
+	
+	// open SERVER PORT (port is optional, default is 21, return 803 if already open)
 	public static void connect(String host) throws IOException{
-		// TODO: if open, close, quit, get blablabla...
 		if (socket != null){
 			throw new IOException("803 Supplied command not expected at this time.");
 		}
@@ -135,71 +135,101 @@ public class CSftp {
 			socket = new Socket(host, port);
 			writer = new PrintWriter(socket.getOutputStream(), true);
 			reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			System.out.println("Successfully connected to " + socket);			
-			String response = reader.readLine();
-			if (!response.startsWith("220 ")){
-				throw new IOException("820 Control connection to " + host + " on port " +  port + " failed to open.");
-			} else {
-			System.out.println(response);
+			//System.out.println("Successfully connected to " + socket);			
+//			String response = getLine();
+//			if (!response.startsWith("220")){
+//				socket.close();
+//				socket = null;
+//				throw new IOException("820 Control connection to " + host + " on port " +  port + " failed to open.");
+//			}
+//			System.out.println("<-- " + response);
+			String response = null;
+			do {
+				response = reader.readLine();
+				if (!response.startsWith("220")){
+					socket.close();
+					socket = null;
+					throw new IOException("820 Control connection to " + host + " on port " +  port + " failed to open.");
+				}
+				System.out.println("<-- " + response);
+			}while(reader.ready());
+			
+//			System.out.println("Name: ");
+//			BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+//            login(userInput.readLine());
+			try {
+				Thread.sleep(1000);
+			}catch (InterruptedException e){
+				// handle exception
 			}
-			System.out.print("Name: ");
-			BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
-            login(userInput.readLine());
+			login();
 
-		}catch (IOException e){
+		}catch (SocketException e){
+			socket.close();
+			socket = null;
 			System.err.println("820 Control connection to " + host + " on port " +  port + " failed to open.");
 		}
 	}
 
 	// user USERNAME
-	public static void login(String user){
-		try {
-			toServer("USER " + user);
-			String response = reader.readLine();
-			if (!response.startsWith("331 ")) {
-				socket = null;
-				socket.close();
-				throw new IOException("login fail" + response);
-            }
-			System.out.println("Server: " + response);
-			System.out.println("password: ");
-			
-			BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
-			String pass = userInput.readLine();
-			toServer("PASS " + pass);
+	public static void login() throws IOException {
+		
+		System.out.println("Name: ");
+		BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+		String user = userInput.readLine();
+		
+		toServer("USER " + user);
+		String response = getLine();
+		if (response.startsWith("331")){
+			// password is needed
+			System.out.println("<-- " + response);
+			pwInput();
+		} else if (response.startsWith("230")){
+			// password is not needed
+			System.out.println("<-- " + response);
+		} else {
+			// not success case
+			socket.close();
+			socket = null;
+			throw new IOException("<-- " + response);
+		}
 
-			response = reader.readLine();
-			if (response.startsWith("230 ")){
-				System.out.println("Server: " + response);
-			} else if (response.startsWith("230-")){
-				System.out.println("Server: " + response);
-			} else {
-				System.out.println("after if check: " + response);
-				socket = null;
-				socket.close();
-				throw new IOException("login fail. " + response);
-				// TODO we have a nullpointer here if user name does not match with password
-			}
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (NullPointerException e){
-			e.printStackTrace();
+	}
+	
+	public static void pwInput() throws IOException{
+		
+		System.out.println("password: ");
+		BufferedReader userInput = new BufferedReader(new InputStreamReader(
+				System.in));
+		String pass = userInput.readLine();
+		toServer("PASS " + pass);
+
+		// response = reader.readLine();
+		String response = getLine();
+		if (response.startsWith("230")) {
+			System.out.println("<-- " + response);
+		} else {
+			socket.close();
+			socket = null;
+			throw new IOException("<-- " + response);
 		}
 	}
 
 	// TODO: close (close current connected server)
 	public static void logout() throws IOException, NullPointerException {
+		if (socket == null || socket.isClosed()){
+			throw new IOException("803 Supplied command not expected at this time.");
+		}
 		try {
 			toServer("QUIT");
-			String response = reader.readLine();
+			String response = getLine();
 			socket.close();
 			socket = null;
-			if (!response.startsWith("221 ")){
-				System.out.println("Server: " + response);
+			if (!response.startsWith("221")){
+				System.out.println("<-- " + response);
 				throw new IOException("803 Supplied command not expected at this time.");
 			} else {
-				System.out.println("Server: " + response);
+				System.out.println("<-- " + response);
 			}
 		} catch (SocketException e){
 			System.err.println("803 Supplied command not expected at this time.");
@@ -207,31 +237,44 @@ public class CSftp {
 	}
 
 	// TODO: quit (quit everything no matter what)
-	public static void disconnect(){
+	public static void disconnect() throws IOException{
+		if (socket == null || socket.isClosed()){
+			reader.close();
+			writer.close();
+			System.exit(0);
+		}
 		try {
-			if (socket == null || socket.isClosed()){
-				System.exit(1);
-			};
 			toServer("QUIT");
-			String response = reader.readLine();
+			String response = getLine();
 			socket.close();
-			System.out.println(response);
-			System.exit(1);
+			socket = null;
+			System.out.println("<-- " + response);
+			reader.close();
+			writer.close();
+			System.exit(0);
 		} catch (IOException e){
-			System.err.println("899 Processing error.");
+			System.err.println("898 Input error while reading commands, terminating.");
+			reader.close();
+			writer.close();
+			System.exit(0);
 		}
 	}
 
 	// TODO: get REMOTE (get file from server)
+	@SuppressWarnings("resource")
 	public static void getFile(String fileName) throws IOException{
+		try {
 		// turn binary flag on
 		toServer("TYPE I");
-		String response = reader.readLine();
+		String response = getLine();
+		if (!response.startsWith("200")){
+			throw new IOException("<-- " + response);
+		}
 		System.out.print("<-- " + response);
 		// open passive mode, get the server address back
 		toServer("PASV");
 		response = reader.readLine();
-		if (!response.startsWith("227 ")){
+		if (!response.startsWith("227")){
 			throw new IOException("<-- " + response);
 		} else {
 			System.out.println("<-- " + response);
@@ -249,6 +292,12 @@ public class CSftp {
 		
 		// send RETR with file name
 		toServer("RETR " + fileName);
+		response = getLine();
+		if(!(response.startsWith("125") || response.startsWith("150"))){
+			throw new IOException("810 Access to local file " + fileName + " denied. ");
+		} else {
+			System.out.println("<-- " + response);
+		}
 		FileOutputStream fileOutput = new FileOutputStream(fileName);
 		InputStream fileInput = transferSocket.getInputStream();
 		byte[] dataBuffer = new byte[4096];
@@ -261,20 +310,32 @@ public class CSftp {
 		fileInput.close();
 		transferSocket.close();
 		
-		printLine();
+		response = getLine();
+		System.out.println("<-- " + response);
+		
+		} catch (SocketException e){
+			System.err.println("825 Control connection I/O error, closing control connection.");
+			socket.close();
+			socket = null;
+		}
 		
 	}
 
 	// TODO: put LOCAL (put local file to server)
+	@SuppressWarnings("resource")
 	public static void putFile(String fileName) throws IOException {
+		try {
 		// turn binary flag on
 		toServer("TYPE I");
-		String response = reader.readLine();
+		String response = getLine();
+		if (!response.startsWith("200")){
+			throw new IOException("<-- " + response);
+		}
 		System.out.print("<-- " + response);
 		// open passive mode, get the server address back
 		toServer("PASV");
 		response = reader.readLine();
-		if (!response.startsWith("227 ")) {
+		if (!response.startsWith("227")){
 			throw new IOException("<-- " + response);
 		} else {
 			System.out.println("<-- " + response);
@@ -292,6 +353,12 @@ public class CSftp {
 
 		// send STOR with file name
 		toServer("STOR " + fileName);
+		response = getLine();
+		if(!(response.startsWith("125") || response.startsWith("150"))){
+			throw new IOException("810 Access to local file " + fileName + " denied. ");
+		} else {
+			System.out.println("<-- " + response);
+		}
 		FileInputStream fileInput = new FileInputStream(fileName);
 		OutputStream fileOutput = transferSocket.getOutputStream();
 		byte[] dataBuffer = new byte[4096];
@@ -304,45 +371,45 @@ public class CSftp {
 		fileInput.close();
 		transferSocket.close();
 		
-		printLine();
+		//printLine();
+		response = getLine();
+		System.out.println("<-- " + response);
+		
+		} catch (SocketException e){
+			System.err.println("825 Control connection I/O error, closing control connection.");
+			socket.close();
+			socket = null;
+		}
 	}
 
 	// TODO: cd DIRECTORY (change curr working dir) CHANGE the error printing
 	public static void changedir(String path) throws IOException {
-		try {
-			toServer("CWD " + path);
-			String response = reader.readLine();
-			if (response.startsWith("550 ")) {
-				System.out.println("Server: " + response);
-				throw new IOException(
-						"803 Supplied command not expected at this time.");
-			} else {
-				System.out.println("Server: " + response);
-			}
-			
-			// print the current directory path
-			toServer("PWD");
-			response = reader.readLine();
-			if (!response.startsWith("257 ")) {
-				System.out.println("<-- " + response);
-				throw new IOException("not right lol.");
-			} else {
-				System.out.println("<-- " + response);
-			}
-
-		} catch (IOException e) {
-			// e.printStackTrace();
-			System.err.println("899 Processing error.");
+		toServer("CWD " + path);
+		String response = getLine();
+		if (!response.startsWith("250")) {
+			throw new IOException("<-- " + response);
+		} else {
+			System.out.println("<-- " + response);
 		}
 
+		// print the current directory path
+		toServer("PWD");
+		response = getLine();
+		if (!response.startsWith("257")) {
+			System.out.println("<-- " + response);
+			throw new IOException("not right lol.");
+		} else {
+			System.out.println("<-- " + response);
+		}
 	}
 
 	// TODO: dir (list of file in working dir on server)
+	@SuppressWarnings("resource")
 	public static void dirlist() throws IOException {
 		// enter the passive mode and get the port address
 		toServer("PASV");
 		String response = reader.readLine();
-		if (!response.startsWith("227 ")){
+		if (!response.startsWith("227")){
 			throw new IOException("<-- " + response);
 		} else {
 			System.out.println("<-- " + response);
@@ -360,7 +427,10 @@ public class CSftp {
 		// send LIST command
 		toServer("LIST");
 		BufferedReader listReader = new BufferedReader(new InputStreamReader(transferSocket.getInputStream()));
-		response = reader.readLine();
+		response = getLine();
+		if (!(response.startsWith("125") || response.startsWith("150"))){
+			throw new IOException("<-- " + response);
+		}
 		System.out.println("<-- " + response);
 		String list = null;
 		while ((list = listReader.readLine()) != null){
@@ -370,9 +440,9 @@ public class CSftp {
 		listReader.close();
 		transferSocket.close();
 
-		// get the current directory to check
-		//toServer("PWD");
-		printLine();
+		//printLine();
+		response = getLine();
+		System.out.println("<-- " + response);
 
 	}
 	
@@ -397,10 +467,19 @@ public class CSftp {
 		
 	}
 	
-	private String getLine(){
+	private static String getLine() throws IOException{
 		String line = null;
-		
-		return line;	
+		StringBuffer sb = new StringBuffer();
+		do {
+			line = reader.readLine();
+			sb.append(line).append("\r\n");
+			if (line == null){
+				socket.close();
+				socket = null;
+				throw new IOException("899 Processing error. The server is not responding.");
+			}
+		}while(reader.ready());
+		return sb.toString();	
 	}
 	
 	private static String[] getDataAddress(String response) throws IOException{
@@ -418,7 +497,7 @@ public class CSftp {
 		for (int i=0;i<6;i++){
 			address[i] = st.nextToken();
 		}
-		System.out.println("the data address is: "+ aString);
+		//System.out.println("the data address is: "+ aString);
 		return address;
 	}
 
