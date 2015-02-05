@@ -1,3 +1,2 @@
 
-Put any comments for the markers in this file. If you don't have any comments you can delete the file from your repo.
-
+- when using ftp.cisco.com, the welcome message is too long and bufferedReader cannot readLine in time, thus when user input [USER] username, the respond is still reading the previous 220 responds and the program results in detecting the wrong respond.
