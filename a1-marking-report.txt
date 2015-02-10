@@ -1,0 +1,133 @@
+Total before late penalty: [ /87]
+
+
+
+NOTE: in the marking report something left blank (e.g.  [ /6]) typically means
+that you got full marks for that item. 
+
+
+CLIENT - FUNCTIONALITY: [/55]
+
+Working makefile produces the CSftp.jar file 		[ /2]
+  
+Open Command                                            [ /6]
+    - Accepts server names in both IP and 
+       domain name format
+    - Proper port processing (uses port 21
+       if no port # supplied)
+    - If there is command connection open, reports a 903
+
+User command                                           [ /7]
+     - Command is rejected if no connection established
+     - Command rejected if no USERNAME paramater provided
+     - Sends USER command to server
+     - Process response indicating password required
+       (2 marks)
+     - Properly handles rejected request
+     - Properly deals with case when no password required
+     
+
+Quit command                                          [ /3]
+     - Closes open connections and exits, 
+     - Sends QUIT on the control connection.
+     - If no open connection just exits
+
+Close command
+      - closes the open control connection           [ /2]
+      - new prompt 
+
+Cd command                                            [ /2]
+     - handles case when no directory specified
+     - sends CWD command
+
+Get command                                           [ /10]
+    - command rejected if no connection currently open
+    - command rejected if improper number of arguments
+    - Sends PASV and opens connection specified in response
+    - Can handle error response or connection failure
+    - Sends RETR and can deal with  ()
+      - failure on remote side
+      	(should close the data connection)
+      - local file open failure
+      - unexpected closure of data channel
+    - actual transfer of file data
+    - properly transfers binary files 
+
+Put command                                           [ /10]
+    - command rejected if no connection currently open
+    - command rejected if improper number of arguments
+    - Sends PASV and opens connection specified in response
+    - Can handle error response or connection failure
+    - Sends STOR and can deal with  (2)
+      - failure on remote side
+      	(should close the data connection)
+      - local file open failure
+      - unexpected closure of data channel
+    - actual transfer of file data  
+    - properly transfers binary files 
+
+dir command                                           [ /6]
+    - command rejected if no connection currently open
+    - Sends PASV and opens connection specified in response
+    - Can handle error response or connection failure
+    - Sends LIST and can deal with  (2)
+      - failure on remote side
+      	(should close the data connection)
+      - unexpected closure of data channel
+     - actual transfer of directory listing is correct
+
+Format of output conforms to that specified in assignment    [ /4]
+   - in particular lines are identified with --> and <--
+   - the contents of the data connection are only printed for the dir 
+     command, get and put do not print what is sent or 
+     received on the data connection. 
+
+Parameters: properly handles multiple spaces or tabs    [ /3]
+
+---------------------------------------
+Interaction with other FTP servers: [ /16]
+
+
+Interaction with ftp.dell.com                [ /8]
+
+      - annoymous login                      [ /2] 
+      - dir                                  [ /1]
+      - cd into directory fixes              [ /1] 
+      - retrieve file viewmtr.exe            [ /2]
+        (note assignment requires all file
+         transfers to be in binary mode) MD5 value
+        should be:
+        5f0f2b2054edb8eadedd6035aa4f196b  viewmtr.exe
+      - cd .. followed by dir                [ /1] 
+      - quit                                 [ /1]
+
+
+Interaction with ftp.cisco.com              [ /8]
+    - anonymous login                       [ /2]
+    - dir                                   [ /1]
+    - cd into pub/mibs/traps                [ /1]
+    - get traps.tar.gz                      [ /2]
+      md5 value is a2499597e028b4c31a5e517b6361c154  traps.tar.gz
+    - wait 60 seconds and quit              [ /2]
+
+---------------------
+STYLE AND COMMENTS: [/16]
+
+   * Easy to read, appropriate layout, lines aren't too long, blank
+     lines delineating blocks of code functionality. (Basically 
+     does it look good and is easy to read.)  [/3]
+
+   * Blocks of code commented. Is it clear what functionality each
+     block of code is responsible for? Is it clear what variables are
+     being used for?   [/3]
+
+   * Code is decomposed into methods. There shouldn't be long 
+     blocks of code or repeated code. [/3]
+
+   * Regular use of git to push changes to stash. [ /2]
+
+   * Marker's discretion   [/5]
+
+
+MARKER'S ADDITIONAL COMMENTS:
+
