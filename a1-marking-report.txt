@@ -1,4 +1,4 @@
-Total before late penalty: [ /87]
+Total before late penalty: [76/87]
 
 
 
@@ -6,125 +6,148 @@ NOTE: in the marking report something left blank (e.g.  [ /6]) typically means
 that you got full marks for that item. 
 
 
-CLIENT - FUNCTIONALITY: [/55]
+CLIENT - FUNCTIONALITY: [44/55]
 
-Working makefile produces the CSftp.jar file 		[ /2]
+Working makefile produces the CSftp.jar file 		[1/2]
+*There are a number of java files. Should change the dependency
+*of CSftp.jar accordingly.
   
-Open Command                                            [ /6]
-    - Accepts server names in both IP and 
-       domain name format
-    - Proper port processing (uses port 21
-       if no port # supplied)
-    - If there is command connection open, reports a 903
+Open Command                                            [ /6]    
+    - Accepts server names in both IP and                         
+       domain name format                                        
+    - Proper port processing (uses port 21                       
+       if no port # supplied)                                    
+    - If there is command connection open, reports a 803         
 
-User command                                           [ /7]
-     - Command is rejected if no connection established
-     - Command rejected if no USERNAME paramater provided
-     - Sends USER command to server
-     - Process response indicating password required
+User command                                           [2/7]
+     - Command is rejected if no connection established          
+     - Command rejected if no USERNAME paramater provided        *Not handled        
+     - Sends USER command to server                              
+     - Process response indicating password required             
        (2 marks)
      - Properly handles rejected request
+       *When the reponse was "530 Login incorrect", the program issued no error message.
+       *Should issue "899 Processing error. Login incorrect." instead
+       *and should not close the connection socket because after this, the program should
+       *handle "user" or "user username". However the program displayed a wrong message of
+       *"800 Invalid command." for either of the two "user command"     
      - Properly deals with case when no password required
-     
+       *In the file CSftp.java, a quick-fix has been applied to this program by marking out line 208
+       *to 209. Replace line 207 with System.out.println("899 Processing error. Login incorrect.");
+       *For the "user command", modify login() as login(String user).
+       *At line 166, add "if (user.equals("")) {" and 
+       *replace line 168 with "user = userInput.readLine(); }"
+       *Replace line 151 with "login("");" Then at line 63, add case "user", handle 801,
+       *add "username = input[1]; login(username);"  Declare username in main.
+       *Part marks are given for the codes in login().     
 
-Quit command                                          [ /3]
-     - Closes open connections and exits, 
-     - Sends QUIT on the control connection.
-     - If no open connection just exits
+Quit command                                          [ /3]      
+     - Closes open connections and exits,                         
+     - Sends QUIT on the control connection.                     
+     - If no open connection just exits                          
 
 Close command
-      - closes the open control connection           [ /2]
-      - new prompt 
+      - closes the open control connection           [ /2]       
+      - new prompt                                               
 
-Cd command                                            [ /2]
-     - handles case when no directory specified
-     - sends CWD command
+Cd command                                            [1/2]      
+     - handles case when no directory specified                  
+     - sends CWD command                                         
+       *Not showing "899 Processing error. Failed to change directory."
+       *for cd to an invalid directory
 
-Get command                                           [ /10]
-    - command rejected if no connection currently open
-    - command rejected if improper number of arguments
-    - Sends PASV and opens connection specified in response
-    - Can handle error response or connection failure
-    - Sends RETR and can deal with  ()
-      - failure on remote side
+Get command                                           [9.5/10]
+    - command rejected if no connection currently open           
+    - command rejected if improper number of arguments           
+    - Sends PASV and opens connection specified in response      
+    - Can handle error response or connection failure            
+    - Sends RETR and can deal with  ()                           
+      - failure on remote side                                   
       	(should close the data connection)
-      - local file open failure
-      - unexpected closure of data channel
-    - actual transfer of file data
-    - properly transfers binary files 
+      - local file open failure                                  
+      - unexpected closure of data channel                       
+      	*Should show 825 Connection I/O error message instead of 899      
+    - actual transfer of file data                               
+    - properly transfers binary files                             
 
-Put command                                           [ /10]
-    - command rejected if no connection currently open
-    - command rejected if improper number of arguments
-    - Sends PASV and opens connection specified in response
-    - Can handle error response or connection failure
-    - Sends STOR and can deal with  (2)
-      - failure on remote side
+Put command                                           [8.5/10]
+    - command rejected if no connection currently open           
+    - command rejected if improper number of arguments           
+    - Sends PASV and opens connection specified in response      
+    - Can handle error response or connection failure            
+      *Should show 899 ... for "553 Could not create file.", which means unable to write, instead of 810
+      - Sends STOR and can deal with  (2)                          
+      - failure on remote side                                  
       	(should close the data connection)
-      - local file open failure
+      - local file open failure                                  
       - unexpected closure of data channel
-    - actual transfer of file data  
-    - properly transfers binary files 
+      	*Should show 825 Connection I/O error message instead of 899      
+    - actual transfer of file data                               
+    - properly transfers binary files                            
 
-dir command                                           [ /6]
-    - command rejected if no connection currently open
-    - Sends PASV and opens connection specified in response
-    - Can handle error response or connection failure
-    - Sends LIST and can deal with  (2)
-      - failure on remote side
+dir command                                           [5.5/6]
+    - command rejected if no connection currently open           
+    - Sends PASV and opens connection specified in response      
+    - Can handle error response or connection failure            
+    - Sends LIST and can deal with  (2)                          
+      - failure on remote side                                   
       	(should close the data connection)
       - unexpected closure of data channel
-     - actual transfer of directory listing is correct
+      	*Should show 825 Connection I/O error message instead of 898      
+     - actual transfer of directory listing is correct           
 
-Format of output conforms to that specified in assignment    [ /4]
-   - in particular lines are identified with --> and <--
+Format of output conforms to that specified in assignment    [3/4]
+   - in particular lines are identified with --> and <--         
    - the contents of the data connection are only printed for the dir 
-     command, get and put do not print what is sent or 
-     received on the data connection. 
-
-Parameters: properly handles multiple spaces or tabs    [ /3]
+     command, get and put do not print what is sent or            
+     received on the data connection.                             
+     *Missing some responses: <-- response code and response message
+     *such as "<-- 550 Failed to open file.", "<-- 553 Could not create file."
+     
+Parameters: properly handles multiple spaces or tabs    [2/3]    
+*Cannot handle 2 cases out of 8 spaces or tabs script tests
 
 ---------------------------------------
 Interaction with other FTP servers: [ /16]
 
 
-Interaction with ftp.dell.com                [ /8]
+Interaction with ftp.dell.com                [ /8]               
 
-      - annoymous login                      [ /2] 
-      - dir                                  [ /1]
-      - cd into directory fixes              [ /1] 
-      - retrieve file viewmtr.exe            [ /2]
+      - annoymous login                      [ /2]               
+      - dir                                  [ /1]              
+      - cd into directory fixes              [ /1]                
+      - retrieve file viewmtr.exe            [ /2]               
         (note assignment requires all file
          transfers to be in binary mode) MD5 value
         should be:
-        5f0f2b2054edb8eadedd6035aa4f196b  viewmtr.exe
-      - cd .. followed by dir                [ /1] 
-      - quit                                 [ /1]
+        5f0f2b2054edb8eadedd6035aa4f196b  viewmtr.exe            
+      - cd .. followed by dir                [ /1]                
+      - quit                                 [ /1]               
 
 
-Interaction with ftp.cisco.com              [ /8]
-    - anonymous login                       [ /2]
-    - dir                                   [ /1]
-    - cd into pub/mibs/traps                [ /1]
-    - get traps.tar.gz                      [ /2]
+Interaction with ftp.cisco.com              [ /8]                
+    - anonymous login                       [ /2]                
+    - dir                                   [ /1]                
+    - cd into pub/mibs/traps                [ /1]                
+    - get traps.tar.gz                      [ /2]                
       md5 value is a2499597e028b4c31a5e517b6361c154  traps.tar.gz
-    - wait 60 seconds and quit              [ /2]
+    - wait 60 seconds and quit              [ /2]                
 
 ---------------------
 STYLE AND COMMENTS: [/16]
 
    * Easy to read, appropriate layout, lines aren't too long, blank
      lines delineating blocks of code functionality. (Basically 
-     does it look good and is easy to read.)  [/3]
+     does it look good and is easy to read.)  [/3]               
 
    * Blocks of code commented. Is it clear what functionality each
      block of code is responsible for? Is it clear what variables are
-     being used for?   [/3]
+     being used for?   [/3]                                      
 
    * Code is decomposed into methods. There shouldn't be long 
-     blocks of code or repeated code. [/3]
+     blocks of code or repeated code. [/3]                       
 
-   * Regular use of git to push changes to stash. [ /2]
+   * Regular use of git to push changes to stash. [ /2]          
 
    * Marker's discretion   [/5]
 
